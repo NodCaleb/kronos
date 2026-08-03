@@ -216,6 +216,45 @@ using known input/output pairs without any hardware present.
 
 ---
 
+### User Story 8 — Comprehensive Project Documentation (Priority: P8)
+
+As a developer, I want the project to include written documentation covering architecture,
+module responsibilities, testing procedures, and deployment steps so that any developer
+familiar with C/C++ and ESP-IDF can understand, build, test, and update the firmware
+without prior project knowledge.
+
+**Why this priority**: Undocumented embedded projects are difficult to hand off, revisit
+after a break, or contribute to. Clear documentation reduces onboarding time and lowers
+the risk of misconfiguration during deployment or testing.
+
+**Independent Test**: Can be fully tested by giving the documentation to a developer
+unfamiliar with the project and verifying they can: understand the module structure from
+the architecture description, identify the purpose of each module, flash and test the
+firmware using only the documented steps, and apply a configuration update using the
+deployment guide — without asking clarifying questions.
+
+**Acceptance Scenarios**:
+
+1. **Given** the project documentation exists, **When** a developer reads the architecture
+   description, **Then** they can identify the technology stack, list all project modules,
+   and describe the responsibility of each module and how they interact.
+
+2. **Given** the project documentation exists, **When** a developer reads the module
+   descriptions, **Then** each module's purpose, public interface, and key behaviors are
+   described clearly enough to use or modify the module without reading its full
+   implementation.
+
+3. **Given** the project documentation exists, **When** a developer follows the testing
+   manual, **Then** they can run both the host-compiled unit tests and the on-device
+   integration tests successfully using only the documented steps.
+
+4. **Given** the project documentation exists, **When** a developer follows the deployment
+   manual, **Then** they can build, flash, and monitor the firmware on a target device, and
+   apply a configuration change (e.g., update Wi-Fi credentials or weather API key) using
+   only the documented steps.
+
+---
+
 ### Edge Cases
 
 - What happens when the configured Wi-Fi SSID does not exist or the password is wrong?
@@ -306,6 +345,15 @@ using known input/output pairs without any hardware present.
   Wi-Fi connectivity is restored after an outage.
 - **FR-022**: The firmware MUST provide a configurable debug logging level that can be
   adjusted without changing business logic code.
+- **FR-023**: The project MUST include an architecture document describing the technology
+  stack, all modules, each module's responsibility, and the dependencies between modules.
+- **FR-024**: Each module MUST be described in documentation covering its purpose, public
+  interface, and key runtime behaviors.
+- **FR-025**: The project MUST include a testing manual with step-by-step instructions for
+  running host-compiled unit tests and on-device integration tests.
+- **FR-026**: The project MUST include a deployment manual with step-by-step instructions
+  for building, flashing, monitoring the firmware, and updating configuration values such
+  as Wi-Fi credentials and the weather API key.
 
 ### Key Entities
 
