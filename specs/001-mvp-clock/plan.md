@@ -10,7 +10,7 @@ Build ESP32-WROOM-32 firmware that displays HH:MM:SS local time (NTP-synced, RTC
 and an hourly weather forecast (next 3–6 hours) on an I2C OLED display. Seven distinct
 device-status states are surfaced at all times. Wi-Fi reconnects with exponential back-off;
 weather and NTP run on separate FreeRTOS tasks so clock display never blocks. Firmware is
-structured as eight discrete ESP-IDF components with host-testable business logic.
+structured as seven discrete ESP-IDF components with host-testable business logic.
 
 ## Technical Context
 
@@ -41,7 +41,7 @@ within 2 seconds of power-on
 early); flash budget <4 MB including dual OTA partitions; HTTPS only; no heap allocation
 in hot display path; all network ops have explicit timeouts; no blocking on main/display task
 
-**Scale/Scope**: Single device, MVP feature set — 8 firmware modules, ~8 user stories,
+**Scale/Scope**: Single device, MVP feature set — 7 firmware modules, ~8 user stories,
 full documentation set (architecture, modules, testing, deployment)
 
 ## Constitution Check
