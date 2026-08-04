@@ -63,7 +63,7 @@ Verify the following before proceeding (Kronos Constitution v1.0.0):
   network; explicit timeouts on all outbound requests (FR-012).
 - [x] **V. Display Abstraction** — `display` component owns all rendering; no other
   component writes to display hardware; accepts `DisplayPayload` struct (FR-019).
-- [x] **VI. Module Boundaries** — Eight mandatory modules per constitution; acyclic
+- [x] **VI. Module Boundaries** — Seven mandatory modules per constitution; acyclic
   dependency graph enforced by design; each module exposes minimal public `.h` header.
 - [x] **VII. Security** — HTTPS enforced via `esp_http_client` + CA bundle (FR-007);
   credentials in `secrets.h` (gitignored) + NVS; `secrets.h.example` committed (FR-020);
@@ -161,7 +161,7 @@ idf_component.yml                # ESP-IDF version pin + external components
 ```
 
 **Structure Decision**: Single ESP-IDF project with all logic in `components/` directory.
-No separate frontend/backend split. Eight components map 1:1 to constitution-mandated
+No separate frontend/backend split. Seven components map 1:1 to constitution-mandated
 modules. `tests/host/` is a standalone CMake project that links only the platform-agnostic
 source files, enabling `cmake -B build && cmake --build build && ./build/host_tests` on
 any Linux/macOS/Windows host without ESP-IDF.

@@ -43,10 +43,10 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
 - [ ] T008 Create `components/app_config/include/app_config.h` declaring `measurement_units_t` enum, `device_config_t` struct with all fields and `CONFIG_*_LEN` constants from data-model.md, and `app_config_load()` / `app_config_validate()` prototypes
-- [ ] T009 Implement `app_config_validate()` (host-testable, no ESP32 platform deps) in `components/app_config/app_config.c` enforcing all field validation rules from data-model.md: non-empty SSID, URL must start with `https://`, interval ranges, etc.
+- [ ] T009 Implement `app_config_validate()` (host-testable, no ESP32 platform deps) in `components/app_config/app_config.c` enforcing all field validation rules from data-model.md: non-empty SSID, URL must start with `https://`, `weather_refresh_interval_s` in [60, 3600] s, `request_timeout_ms` in [1000, 30000] ms, etc.
 - [ ] T010 Implement `app_config_load()` in `components/app_config/app_config.c` — read from NVS namespace `kronos_cfg`; on first boot write values from `secrets.h`; return `ESP_ERR_NVS_*` on storage error
 - [ ] T011 [P] Create `components/app_config/CMakeLists.txt` declaring `REQUIRES nvs_flash`
-- [ ] T012 Create `components/app_state/include/app_state.h` declaring `wifi_state_t` enum (`WIFI_STATE_INIT/CONNECTING/CONNECTED/OFFLINE`), `time_sync_state_t` enum, `app_state_t` struct (with `wifi_state`, `time_state`, `local_time`, `weather`, `last_weather_update_s`, `status_message[64]`), and all accessor prototypes from contracts/module-apis.md
+- [ ] T012 Create `components/app_state/include/app_state.h` — `#include <time_sync.h>` for `time_sync_state_t` (owned by `time_sync.h`; do **not** redeclare it here); declare `wifi_state_t` enum (`WIFI_STATE_INIT/CONNECTING/CONNECTED/OFFLINE`), `app_state_t` struct (with `wifi_state`, `time_state`, `local_time`, `weather`, `last_weather_update_s`, `status_message[64]`), and all accessor prototypes from contracts/module-apis.md
 - [ ] T013 Implement `app_state_init()`, `app_state_lock()`, `app_state_unlock()`, `app_state_get()`, and `app_state_try_read()` in `components/app_state/app_state.c` using a FreeRTOS mutex (`xSemaphoreCreateMutex`); `app_state_try_read()` uses 5 ms timeout
 - [ ] T014 [P] Create `components/app_state/CMakeLists.txt` declaring `REQUIRES freertos`
 - [ ] T015 [P] Create `components/error_handler/include/error_handler.h` declaring `error_handler_fatal(const char *tag, const char *message, esp_err_t err)` and `error_handler_warn(const char *tag, const char *message, esp_err_t err)`
@@ -72,7 +72,7 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 - [ ] T022 [P] [US1] Create `components/display/CMakeLists.txt` declaring `REQUIRES nopnop2002__esp-idf-ssd1306`
 - [ ] T023 [US1] Create `components/time_sync/include/time_sync.h` declaring `time_sync_state_t` enum and all prototypes from contracts/module-apis.md: `time_sync_init()`, `time_sync_start()`, `time_sync_get_state()`, `time_sync_get_local_time()`, `time_format_hms()`, `time_format_date()`
 - [ ] T024 [P] [US1] Implement `time_format_hms(const struct tm *t, char *buf, size_t len)` (host-testable — no ESP32 platform deps) in `components/time_sync/time_format.c` formatting `struct tm` as `"HH:MM:SS"`; add `#ifndef ESP_PLATFORM` guard
-- [ ] T025 [P] [US1] Implement `time_format_date(const struct tm *t, char *buf, size_t len)` (host-testable) in `components/time_sync/time_format.c` formatting `struct tm` as `"Mon DD Mon"` (e.g., `"Sun 03 Aug"`); guard with `#ifndef ESP_PLATFORM`
+- [ ] T025 [P] [US1] Implement `time_format_date(const struct tm *t, char *buf, size_t len)` (host-testable) in `components/time_sync/time_format.c` formatting `struct tm` as `"%a %d %b"` (e.g., `"Sun 03 Aug"`); guard with `#ifndef ESP_PLATFORM`
 - [ ] T026 [P] [US1] Create `components/time_sync/CMakeLists.txt` declaring `REQUIRES esp_sntp`
 - [ ] T027 [US1] Create `main/main.c` with `app_main()` calling `app_config_load()`, `app_state_init()`, `display_init()`; implement `clock_task` (priority 5, 4 KB stack) that reads `app_state` every second via `app_state_try_read()`, builds `display_payload_t` (time + date via `time_format_hms` / `time_format_date`), and calls `display_render()`
 
@@ -80,24 +80,7 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 
 ---
 
-## Phase 4: User Story 2 — Automatic Internet Time Synchronization (Priority: P2)
-
-**Goal**: Device connects to Wi-Fi (prerequisite), starts SNTP with configured NTP server and POSIX TZ string, syncs time, updates `app_state.time_state` to `TIME_STATE_SYNCED`, and re-syncs every 3 hours.
-
-**Independent Test**: Boot device with valid config. Serial log shows `"Time synchronized"`. Displayed time matches reference clock. Status indicator transitions from `"Time: syncing"` to `"Synced"`. See quickstart.md Scenario 2.
-
-### Implementation for User Story 2
-
-- [ ] T028 [US2] Implement `time_sync_init(const device_config_t *config)` in `components/time_sync/time_sync.c` — configure `esp_sntp` with `config->ntp_server`; set POSIX TZ via `setenv("TZ", config->tz_posix, 1)` + `tzset()`; store event group handle from `wifi_manager_get_event_group()`
-- [ ] T029 [US2] Implement `time_sync_start()` spawning `ntp_task` (priority 3, 3 KB stack) in `components/time_sync/time_sync.c` — task waits on `WIFI_CONNECTED_BIT`; calls `esp_sntp_init()`; polls sync status with timeout; on sync success updates `app_state.time_state = TIME_STATE_SYNCED` and logs `"Time synchronized. Drift: %.2f s"`; re-syncs every 3 hours; on NTP failure logs `ESP_LOGW` and retries without crashing
-- [ ] T030 [P] [US2] Implement `time_sync_get_state()` and `time_sync_get_local_time()` accessors in `components/time_sync/time_sync.c` — `get_local_time()` reads system clock via `localtime_r()`; safe to call from any task
-- [ ] T031 [US2] Update `main/main.c` `app_main()` to call `time_sync_init()` and `time_sync_start()` after `wifi_manager_start()`; update `clock_task` to include `app_state.time_state` in the `DisplayPayload.status` string
-
-**Checkpoint**: Serial log shows NTP sync event; displayed time matches reference; status cycles `"Time: syncing"` → `"Synced"`. US2 independently testable (requires US3 Wi-Fi to be functional).
-
----
-
-## Phase 5: User Story 3 — Wi-Fi Connectivity with Automatic Recovery (Priority: P3)
+## Phase 4: User Story 3 — Wi-Fi Connectivity with Automatic Recovery (Priority: P3)
 
 **Goal**: Device connects to configured Wi-Fi on boot, handles unavailable network with exponential back-off (capped at `wifi_max_retry_interval_s`), updates `app_state.wifi_state`, and auto-recovers without user intervention when network is restored.
 
@@ -113,6 +96,23 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 - [ ] T037 [US3] Update `main/main.c` `app_main()` to call `wifi_manager_init()` and `wifi_manager_start()` before `time_sync_start()`; pass `wifi_manager_get_event_group()` to `time_sync_init()` so `ntp_task` waits on the correct event group
 
 **Checkpoint**: Boot with router off — offline/retrying status shown, no crash, no reboot loop. Re-enable router — device reconnects, NTP re-syncs, no intervention needed. US3 independently testable.
+
+---
+
+## Phase 5: User Story 2 — Automatic Internet Time Synchronization (Priority: P2)
+
+**Goal**: Device connects to Wi-Fi (prerequisite), starts SNTP with configured NTP server and POSIX TZ string, syncs time, updates `app_state.time_state` to `TIME_STATE_SYNCED`, and re-syncs every 3 hours.
+
+**Independent Test**: Boot device with valid config. Serial log shows `"Time synchronized"`. Displayed time matches reference clock. Status indicator transitions from `"Time: syncing"` to `"Synced"`. See quickstart.md Scenario 2.
+
+### Implementation for User Story 2
+
+- [ ] T028 [US2] Implement `time_sync_init(const device_config_t *config)` in `components/time_sync/time_sync.c` — configure `esp_sntp` with `config->ntp_server`; set POSIX TZ via `setenv("TZ", config->tz_posix, 1)` + `tzset()`; store event group handle from `wifi_manager_get_event_group()`
+- [ ] T029 [US2] Implement `time_sync_start()` spawning `ntp_task` (priority 3, 3 KB stack) in `components/time_sync/time_sync.c` — task waits on `WIFI_CONNECTED_BIT`; calls `esp_sntp_init()`; polls sync status with timeout; on sync success updates `app_state.time_state = TIME_STATE_SYNCED` and logs `"Time synchronized. Drift: %.2f s"`; re-syncs every 3 hours; on NTP failure logs `ESP_LOGW` and retries without crashing
+- [ ] T030 [P] [US2] Implement `time_sync_get_state()` and `time_sync_get_local_time()` accessors in `components/time_sync/time_sync.c` — `get_local_time()` reads system clock via `localtime_r()`; safe to call from any task
+- [ ] T031 [US2] Update `main/main.c` `app_main()` to call `time_sync_init()` and `time_sync_start()` after `wifi_manager_start()`; update `clock_task` to include `app_state.time_state` in the `DisplayPayload.status` string
+
+**Checkpoint**: Serial log shows NTP sync event; displayed time matches reference; status cycles `"Time: syncing"` → `"Synced"`. US2 independently testable (requires Phase 4 Wi-Fi to be functional).
 
 ---
 
@@ -181,10 +181,12 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 - [ ] T053 [P] [US7] Create `tests/host/host_stubs.h` providing minimal stubs for host compilation: `typedef int esp_err_t`, `#define ESP_OK 0`, `#define ESP_ERR_INVALID_ARG -1`, `#define ESP_ERR_INVALID_RESPONSE -2`, no-op `ESP_LOGI/LOGW/LOGE` macros; guards with `#ifndef HOST_STUBS_H`
 - [ ] T054 [P] [US7] Update `#ifndef ESP_PLATFORM` guards in `components/weather_service/weather_parser.c`, `components/time_sync/time_format.c`, and `app_config_validate()` in `components/app_config/app_config.c` to `#ifdef HOST_BUILD` (or ensure both guards compile cleanly on host without ESP-IDF headers)
 - [ ] T055 [US7] Create `tests/host/test_weather_parser.c` with Unity tests: (1) valid OWM JSON parses correctly — `current_temp`, `current_condition_code`, 6 `hourly_slot_t` entries; (2) empty `hourly` array returns `ESP_ERR_INVALID_RESPONSE`; (3) missing `current` object returns `ESP_ERR_INVALID_RESPONSE`; (4) `*out` is unchanged on any parse failure (retain-old-data rule from data-model.md); (5) `current.weather` with `id == 0` rejected
-- [ ] T056 [P] [US7] Create `tests/host/test_time_format.c` with Unity tests: `time_format_hms()` formats midnight as `"00:00:00"`, noon as `"12:00:00"`, 23:59:59 as `"23:59:59"`; `time_format_date()` formats a known `struct tm` to the correct `"Mon DD Mon"` string; buffer too-small returns expected char count
-- [ ] T057 [P] [US7] Create `tests/host/test_app_config.c` with Unity tests: empty `wifi_ssid` returns `ESP_ERR_INVALID_ARG`; `weather_api_url` starting with `http://` returns `ESP_ERR_INVALID_ARG`; `weather_refresh_interval_s = 59` returns `ESP_ERR_INVALID_ARG`; `request_timeout_ms = 31000` returns `ESP_ERR_INVALID_ARG`; fully valid config returns `ESP_OK`
+- [ ] T056 [P] [US7] Create `tests/host/test_time_format.c` with Unity tests: `time_format_hms()` formats midnight as `"00:00:00"`, noon as `"12:00:00"`, 23:59:59 as `"23:59:59"`; `time_format_date()` formats a known `struct tm` to the correct `"%a %d %b"` output (e.g., `"Sun 03 Aug"`); buffer too-small returns expected char count
+- [ ] T057 [P] [US7] Create `tests/host/test_app_config.c` with Unity tests: empty `wifi_ssid` returns `ESP_ERR_INVALID_ARG`; `weather_api_url` starting with `http://` returns `ESP_ERR_INVALID_ARG`; `weather_refresh_interval_s = 59` returns `ESP_ERR_INVALID_ARG`; `weather_refresh_interval_s = 3601` returns `ESP_ERR_INVALID_ARG` (SC-007 upper bound); `request_timeout_ms = 31000` returns `ESP_ERR_INVALID_ARG`; fully valid config returns `ESP_OK`
+- [ ] T067 [US7] Extract `build_status_string()` from `main/main.c` into `main/status_builder.c` + `main/status_builder.h`; add `#ifdef HOST_BUILD` guard (no FreeRTOS or ESP-IDF hardware deps); update `main/main.c` to `#include "status_builder.h"`; update `tests/host/CMakeLists.txt` to also link `../../main/status_builder.c` (resolves C1 — makes display data preparation host-testable per SC-009/US7)
+- [ ] T068 [P] [US7] Create `tests/host/test_status_builder.c` with Unity tests covering all 7 status strings per the data-model.md Status State Machine: `WIFI_STATE_CONNECTING` → `"Wi-Fi: connecting"`; connected + `TIME_STATE_NOT_SYNCED` → `"Time: syncing"`; connected + synced + `WEATHER_FRESH` → `"Synced"`; connected + synced + `WEATHER_STALE` → `"Weather stale"`; connected + synced + `WEATHER_UNAVAILABLE` → `"Weather N/A"`; `WIFI_STATE_OFFLINE` + synced → `"Wi-Fi: offline"`; offline + not synced → `"Offline, no sync"`
 
-**Checkpoint**: `./tests/host/build/host_tests` reports all tests PASS. No hardware required. US7 independently executable on any host with cmake + gcc/clang.
+**Checkpoint**: `./tests/host/build/host_tests` reports all tests PASS (including T068 status builder). No hardware required. US7 independently executable on any host with cmake + gcc/clang.
 
 ---
 
@@ -224,6 +226,7 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 - **Phase 1 (Setup)**: No dependencies — start immediately
 - **Phase 2 (Foundational)**: Depends on Phase 1 — **BLOCKS all user stories**
 - **Phase 3–10 (User Stories)**: All depend on Phase 2 completion; proceed in priority order or parallel by story
+- **Phase 5 (US2 — Time Sync)**: Depends on Phase 4 (US3 — Wi-Fi); `ntp_task` calls `wifi_manager_get_event_group()` created in Phase 4
 - **Polish**: Depends on all desired user stories being complete
 
 ### User Story Dependencies
@@ -251,7 +254,7 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 - All Phase 1 tasks T002–T007 are fully parallel (independent files)
 - In Phase 2: `error_handler` (T015–T017) fully parallel with `app_state` (T012–T014)
 - In Phase 3: `time_format.c` functions (T024, T025) fully parallel with `display.c` functions (T019–T021)
-- In Phase 9 (US7): test files T055, T056, T057 parallel once stubs (T053, T054) exist
+- In Phase 9 (US7): test files T055, T056, T057, T068 parallel once stubs (T053, T054) exist; T067 (extract `status_builder.c`) must precede T068
 - Phases 8 (US6 audit) and 9 (US7 host tests) can proceed in parallel with each other
 - All Phase 10 integration test stubs T062, T063, T064 are fully parallel
 
@@ -286,6 +289,8 @@ T027: main/main.c — app_main() + clock_task
 T055: tests/host/test_weather_parser.c
 T056: tests/host/test_time_format.c
 T057: tests/host/test_app_config.c
+T067: main/status_builder.c + main/status_builder.h (extract from main.c)
+T068: tests/host/test_status_builder.c
 ```
 
 ---
@@ -333,7 +338,7 @@ With three developers after Phase 2 completes:
 - `[P]` tasks are in different files with no dependencies on other in-progress tasks in the same phase
 - `[USn]` label maps each task to its user story for traceability and independent testing
 - Each user story phase ends with an independent, hardware-verifiable checkpoint
-- All host tests (T055–T057) MUST pass before flashing any firmware
+- All host tests (T055–T057, T068) MUST pass before flashing any firmware
 - `secrets.h` MUST be gitignored before the first commit containing config — see T006
 - Avoid: vague tasks, same-file conflicts within a parallel group, cross-story dependencies that break independent testability
 - Commit after each task or logical group; use the task ID (e.g., `T027`) in the commit message for traceability
