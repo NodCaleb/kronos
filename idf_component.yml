@@ -1,0 +1,5 @@
+## IDF Component Manager manifest — Kronos MVP
+dependencies:
+  idf: ">=5.0.0"
+  nopnop2002/esp-idf-ssd1306:
+    version: ">=1.0.0"

@@ -24,13 +24,13 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 
 **Purpose**: Repository scaffolding and ESP-IDF project initialization. No component code begins until this phase is complete.
 
-- [ ] T001 Initialize ESP-IDF project directory structure per plan.md: create `main/`, `components/`, `tests/host/`, `tests/integration/`, `docs/` at repository root
-- [ ] T002 [P] Create `partition-table.csv` at repo root with app0, app1 (OTA), nvs, and phy_init partitions (Principle XII — dual OTA from day one)
-- [ ] T003 [P] Create `idf_component.yml` at repo root pinning ESP-IDF v5.x and declaring `nopnop2002/esp-idf-ssd1306: ">=1.0.0"` as a dependency
-- [ ] T004 [P] Create `sdkconfig.defaults` at repo root with log level default, I2C pin defaults (SDA=21, SCL=22), `CONFIG_ESP_TLS_USING_MBEDTLS=y`, and `CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y`
-- [ ] T005 [P] Create `main/secrets.h.example` with placeholder `#define` entries for `CONFIG_WIFI_SSID`, `CONFIG_WIFI_PASSWORD`, `CONFIG_OWM_API_KEY`, `CONFIG_WEATHER_LOCATION`, and `CONFIG_TZ_POSIX`
-- [ ] T006 [P] Create `.gitignore` at repo root excluding `main/secrets.h`, `sdkconfig.local`, `build/`, and any generated IDE files
-- [ ] T007 [P] Create `main/CMakeLists.txt` registering `main.c` and declaring all seven component dependencies
+- [X] T001 Initialize ESP-IDF project directory structure per plan.md: create `main/`, `components/`, `tests/host/`, `tests/integration/`, `docs/` at repository root
+- [X] T002 [P] Create `partition-table.csv` at repo root with app0, app1 (OTA), nvs, and phy_init partitions (Principle XII — dual OTA from day one)
+- [X] T003 [P] Create `idf_component.yml` at repo root pinning ESP-IDF v5.x and declaring `nopnop2002/esp-idf-ssd1306: ">=1.0.0"` as a dependency
+- [X] T004 [P] Create `sdkconfig.defaults` at repo root with log level default, I2C pin defaults (SDA=21, SCL=22), `CONFIG_ESP_TLS_USING_MBEDTLS=y`, and `CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y`
+- [X] T005 [P] Create `main/secrets.h.example` with placeholder `#define` entries for `CONFIG_WIFI_SSID`, `CONFIG_WIFI_PASSWORD`, `CONFIG_OWM_API_KEY`, `CONFIG_WEATHER_LOCATION`, and `CONFIG_TZ_POSIX`
+- [X] T006 [P] Create `.gitignore` at repo root excluding `main/secrets.h`, `sdkconfig.local`, `build/`, and any generated IDE files
+- [X] T007 [P] Create `main/CMakeLists.txt` registering `main.c` and declaring all seven component dependencies
 
 **Checkpoint**: `idf.py set-target esp32 && idf.py build` parses the project structure without component source errors.
 
@@ -42,16 +42,16 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T008 Create `components/app_config/include/app_config.h` declaring `measurement_units_t` enum, `device_config_t` struct with all fields and `CONFIG_*_LEN` constants from data-model.md, and `app_config_load()` / `app_config_validate()` prototypes
-- [ ] T009 Implement `app_config_validate()` (host-testable, no ESP32 platform deps) in `components/app_config/app_config.c` enforcing all field validation rules from data-model.md: non-empty SSID, URL must start with `https://`, `weather_refresh_interval_s` in [60, 3600] s, `request_timeout_ms` in [1000, 30000] ms, `wifi_max_retry_interval_s` in [1, 300] s (upper bound enforces SC-004 5-minute resume SLA), etc.
-- [ ] T010 Implement `app_config_load()` in `components/app_config/app_config.c` — read from NVS namespace `kronos_cfg`; on first boot write values from `secrets.h`; return `ESP_ERR_NVS_*` on storage error
-- [ ] T011 [P] Create `components/app_config/CMakeLists.txt` declaring `REQUIRES nvs_flash`
-- [ ] T012 Create `components/app_state/include/app_state.h` declaring `wifi_state_t` enum (`WIFI_STATE_INIT/CONNECTING/CONNECTED/OFFLINE`), `time_sync_state_t` enum (canonical definition — `time_sync.h` includes this file for the type, not the reverse), `app_state_t` struct (with `wifi_state`, `time_state`, `local_time`, `weather`, `last_weather_update_s`, `status_message[64]`), and all accessor prototypes from contracts/module-apis.md
-- [ ] T013 Implement `app_state_init()`, `app_state_lock()`, `app_state_unlock()`, `app_state_get()`, and `app_state_try_read()` in `components/app_state/app_state.c` using a FreeRTOS mutex (`xSemaphoreCreateMutex`); `app_state_try_read()` uses 5 ms timeout
-- [ ] T014 [P] Create `components/app_state/CMakeLists.txt` declaring `REQUIRES freertos`
-- [ ] T015 [P] Create `components/error_handler/include/error_handler.h` declaring `error_handler_fatal(const char *tag, const char *message, esp_err_t err)` and `error_handler_warn(const char *tag, const char *message, esp_err_t err)`
-- [ ] T016 [P] Implement `error_handler_fatal()` (log `ESP_LOGE`, delay 1 s, call `esp_restart()`) and `error_handler_warn()` (log `ESP_LOGW`, no restart) in `components/error_handler/error_handler.c`
-- [ ] T017 [P] Create `components/error_handler/CMakeLists.txt`
+- [X] T008 Create `components/app_config/include/app_config.h` declaring `measurement_units_t` enum, `device_config_t` struct with all fields and `CONFIG_*_LEN` constants from data-model.md, and `app_config_load()` / `app_config_validate()` prototypes
+- [X] T009 Implement `app_config_validate()` (host-testable, no ESP32 platform deps) in `components/app_config/app_config.c` enforcing all field validation rules from data-model.md: non-empty SSID, URL must start with `https://`, `weather_refresh_interval_s` in [60, 3600] s, `request_timeout_ms` in [1000, 30000] ms, `wifi_max_retry_interval_s` in [1, 300] s (upper bound enforces SC-004 5-minute resume SLA), etc.
+- [X] T010 Implement `app_config_load()` in `components/app_config/app_config.c` — read from NVS namespace `kronos_cfg`; on first boot write values from `secrets.h`; return `ESP_ERR_NVS_*` on storage error
+- [X] T011 [P] Create `components/app_config/CMakeLists.txt` declaring `REQUIRES nvs_flash`
+- [X] T012 Create `components/app_state/include/app_state.h` declaring `wifi_state_t` enum (`WIFI_STATE_INIT/CONNECTING/CONNECTED/OFFLINE`), `time_sync_state_t` enum (canonical definition — `time_sync.h` includes this file for the type, not the reverse), `app_state_t` struct (with `wifi_state`, `time_state`, `local_time`, `weather`, `last_weather_update_s`, `status_message[64]`), and all accessor prototypes from contracts/module-apis.md
+- [X] T013 Implement `app_state_init()`, `app_state_lock()`, `app_state_unlock()`, `app_state_get()`, and `app_state_try_read()` in `components/app_state/app_state.c` using a FreeRTOS mutex (`xSemaphoreCreateMutex`); `app_state_try_read()` uses 5 ms timeout
+- [X] T014 [P] Create `components/app_state/CMakeLists.txt` declaring `REQUIRES freertos`
+- [X] T015 [P] Create `components/error_handler/include/error_handler.h` declaring `error_handler_fatal(const char *tag, const char *message, esp_err_t err)` and `error_handler_warn(const char *tag, const char *message, esp_err_t err)`
+- [X] T016 [P] Implement `error_handler_fatal()` (log `ESP_LOGE`, delay 1 s, call `esp_restart()`) and `error_handler_warn()` (log `ESP_LOGW`, no restart) in `components/error_handler/error_handler.c`
+- [X] T017 [P] Create `components/error_handler/CMakeLists.txt`
 
 **Checkpoint**: All three foundational components compile cleanly. `app_config`, `app_state`, and `error_handler` headers are importable. User story implementation can now begin.
 
@@ -65,16 +65,16 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Create `components/display/include/display.h` declaring `display_payload_t` struct with all fields and `DISPLAY_*_LEN` constants from data-model.md, plus `display_init()`, `display_render()`, and `display_show_message()` prototypes
-- [ ] T019 [US1] Implement `display_init()` in `components/display/display.c` — initialize I2C bus, call `esp-idf-ssd1306` driver init, show splash screen `"Kronos v0.1.0"` via `display_show_message()` within 2 seconds of power-on (SC-001, Principle XI)
-- [ ] T020 [US1] Implement `display_render(const display_payload_t *payload)` in `components/display/display.c` — render all `display_payload_t` fields to OLED; use partial redraw for time digit area; zero direct calls to `esp_sntp`, `esp_http_client`, or any `weather_*` function (Principle V)
-- [ ] T021 [P] [US1] Implement `display_show_message(const char *line1, const char *line2)` in `components/display/display.c` — two-line status overlay for boot and error states
-- [ ] T022 [P] [US1] Create `components/display/CMakeLists.txt` declaring `REQUIRES nopnop2002__esp-idf-ssd1306`
-- [ ] T023 [US1] Create `components/time_sync/include/time_sync.h` — `#include <app_state.h>` for `time_sync_state_t` (do **not** redeclare it; `app_state.h` is the canonical owner); declare all prototypes from contracts/module-apis.md: `time_sync_init()`, `time_sync_start()`, `time_sync_get_state()`, `time_sync_get_local_time()`, `time_format_hms()`, `time_format_date()`
-- [ ] T024 [P] [US1] Implement `time_format_hms(const struct tm *t, char *buf, size_t len)` (host-testable — no ESP32 platform deps) in `components/time_sync/time_format.c` formatting `struct tm` as `"HH:MM:SS"`; add `#ifndef ESP_PLATFORM` guard
-- [ ] T025 [P] [US1] Implement `time_format_date(const struct tm *t, char *buf, size_t len)` (host-testable) in `components/time_sync/time_format.c` formatting `struct tm` as `"%a %d %b"` (e.g., `"Sun 03 Aug"`); guard with `#ifndef ESP_PLATFORM`
-- [ ] T026 [P] [US1] Create `components/time_sync/CMakeLists.txt` declaring `REQUIRES esp_sntp app_config app_state wifi_manager`
-- [ ] T027 [US1] Create `main/main.c` with `app_main()` calling `app_config_load()`, `app_state_init()`, `display_init()`; implement `clock_task` (priority 5, 4 KB stack) that reads `app_state` every second via `app_state_try_read()`, builds `display_payload_t` (time + date via `time_format_hms` / `time_format_date`), and calls `display_render()`
+- [X] T018 [US1] Create `components/display/include/display.h` declaring `display_payload_t` struct with all fields and `DISPLAY_*_LEN` constants from data-model.md, plus `display_init()`, `display_render()`, and `display_show_message()` prototypes
+- [X] T019 [US1] Implement `display_init()` in `components/display/display.c` — initialize I2C bus, call `esp-idf-ssd1306` driver init, show splash screen `"Kronos v0.1.0"` via `display_show_message()` within 2 seconds of power-on (SC-001, Principle XI)
+- [X] T020 [US1] Implement `display_render(const display_payload_t *payload)` in `components/display/display.c` — render all `display_payload_t` fields to OLED; use partial redraw for time digit area; zero direct calls to `esp_sntp`, `esp_http_client`, or any `weather_*` function (Principle V)
+- [X] T021 [P] [US1] Implement `display_show_message(const char *line1, const char *line2)` in `components/display/display.c` — two-line status overlay for boot and error states
+- [X] T022 [P] [US1] Create `components/display/CMakeLists.txt` declaring `REQUIRES nopnop2002__esp-idf-ssd1306`
+- [X] T023 [US1] Create `components/time_sync/include/time_sync.h` — `#include <app_state.h>` for `time_sync_state_t` (do **not** redeclare it; `app_state.h` is the canonical owner); declare all prototypes from contracts/module-apis.md: `time_sync_init()`, `time_sync_start()`, `time_sync_get_state()`, `time_sync_get_local_time()`, `time_format_hms()`, `time_format_date()`
+- [X] T024 [P] [US1] Implement `time_format_hms(const struct tm *t, char *buf, size_t len)` (host-testable — no ESP32 platform deps) in `components/time_sync/time_format.c` formatting `struct tm` as `"HH:MM:SS"`; add `#ifndef ESP_PLATFORM` guard
+- [X] T025 [P] [US1] Implement `time_format_date(const struct tm *t, char *buf, size_t len)` (host-testable) in `components/time_sync/time_format.c` formatting `struct tm` as `"%a %d %b"` (e.g., `"Sun 03 Aug"`); guard with `#ifndef ESP_PLATFORM`
+- [X] T026 [P] [US1] Create `components/time_sync/CMakeLists.txt` declaring `REQUIRES esp_sntp app_config app_state wifi_manager`
+- [X] T027 [US1] Create `main/main.c` with `app_main()` calling `app_config_load()`, `app_state_init()`, `display_init()`; implement `clock_task` (priority 5, 4 KB stack) that reads `app_state` every second via `app_state_try_read()`, builds `display_payload_t` (time + date via `time_format_hms` / `time_format_date`), and calls `display_render()`
 
 **Checkpoint**: Flash firmware. Display shows `HH:MM:SS` + date updating every second. Splash screen appears at boot. US1 independently testable — clock runs even with no network.
 

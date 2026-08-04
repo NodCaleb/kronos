@@ -1,0 +1,5 @@
+idf_component_register(
+    SRCS "display.c"
+    INCLUDE_DIRS "include"
+    REQUIRES nopnop2002__esp-idf-ssd1306
+)

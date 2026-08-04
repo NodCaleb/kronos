@@ -30,3 +30,26 @@
 *.exe
 *.out
 *.app
+
+# ── ESP-IDF / Kronos ────────────────────────────────────────────────────────
+# Build output
+build/
+sdkconfig
+sdkconfig.local
+dependencies.lock
+managed_components/
+.idf_cmakecache
+
+# Secrets — never commit
+main/secrets.h
+
+# Partition table generated artefacts
+*.bin
+
+# IDE
+.vscode/settings.json
+.idea/
+*.iml
+
+# macOS
+.DS_Store
