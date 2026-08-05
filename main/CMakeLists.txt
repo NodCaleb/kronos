@@ -7,6 +7,6 @@ idf_component_register(
         app_config
         app_state
         error_handler
-        # wifi_manager added in Phase 4 (T037)
+        wifi_manager
         # weather_service added in Phase 6 (T044)
 )

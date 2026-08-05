@@ -1,4 +1,4 @@
-/* Init order: app_config → app_state → display → [wifi Phase 4] → [ntp Phase 5]
+/* Init order: app_config → app_state → display → wifi_manager → [ntp Phase 5]
  *             → [weather Phase 6] → clock_task
  */
 #include <string.h>
@@ -10,6 +10,7 @@
 #include "display.h"
 #include "time_sync.h"
 #include "error_handler.h"
+#include "wifi_manager.h"
 
 static const char *TAG = "main";
 
@@ -48,7 +49,6 @@ static void clock_task(void *pvArg)
 
 void app_main(void)
 {
-    /* Phase 3 init sequence (wifi / ntp / weather added in later phases) */
     device_config_t config;
     esp_err_t ret = app_config_load(&config);
     if (ret != ESP_OK) {
@@ -65,6 +65,12 @@ void app_main(void)
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "display_init failed", ret);
     }
+
+    ret = wifi_manager_init(&config);
+    if (ret != ESP_OK) {
+        error_handler_fatal(TAG, "wifi_manager_init failed", ret);
+    }
+    wifi_manager_start(); /* spawns wifi_task (priority 4); ntp/weather added in Phases 5/6 */
 
     xTaskCreate(clock_task, "clock_task", 4096, NULL, 5, NULL);
 }

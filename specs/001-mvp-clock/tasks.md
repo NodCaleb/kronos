@@ -88,12 +88,12 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 
 ### Implementation for User Story 3
 
-- [ ] T032 [US3] Create `components/wifi_manager/include/wifi_manager.h` declaring `wifi_state_t` enum, `WIFI_CONNECTED_BIT` / `WIFI_DISCONNECTED_BIT` event bit constants, and all four accessor prototypes from contracts/module-apis.md
-- [ ] T033 [US3] Implement `wifi_manager_init(const device_config_t *config)` in `components/wifi_manager/wifi_manager.c` — initialize `esp_wifi` stack in station mode; register `WIFI_EVENT` and `IP_EVENT` handlers; create `EventGroupHandle_t`; store config pointer; return `ESP_OK` or `ESP_ERR_*`
-- [ ] T034 [US3] Implement `wifi_manager_start()` spawning `wifi_task` (priority 4, 4 KB stack) in `components/wifi_manager/wifi_manager.c` — task drives connection; on connect sets `WIFI_CONNECTED_BIT`, clears `WIFI_DISCONNECTED_BIT`, updates `app_state.wifi_state = WIFI_STATE_CONNECTED`; on disconnect sets `WIFI_DISCONNECTED_BIT`, clears `WIFI_CONNECTED_BIT`, updates `app_state.wifi_state = WIFI_STATE_OFFLINE`; retries with exponential back-off (start 1 s, double each attempt, cap at `config->wifi_max_retry_interval_s`)
-- [ ] T035 [P] [US3] Implement `wifi_manager_get_state()` and `wifi_manager_get_event_group()` as thread-safe accessors in `components/wifi_manager/wifi_manager.c`
-- [ ] T036 [P] [US3] Create `components/wifi_manager/CMakeLists.txt` declaring `REQUIRES esp_wifi esp_event app_config app_state`
-- [ ] T037 [US3] Update `main/main.c` `app_main()` to call `wifi_manager_init()` and `wifi_manager_start()` before `time_sync_start()`; pass `wifi_manager_get_event_group()` to `time_sync_init()` so `ntp_task` waits on the correct event group
+- [X] T032 [US3] Create `components/wifi_manager/include/wifi_manager.h` declaring `wifi_state_t` enum, `WIFI_CONNECTED_BIT` / `WIFI_DISCONNECTED_BIT` event bit constants, and all four accessor prototypes from contracts/module-apis.md
+- [X] T033 [US3] Implement `wifi_manager_init(const device_config_t *config)` in `components/wifi_manager/wifi_manager.c` — initialize `esp_wifi` stack in station mode; register `WIFI_EVENT` and `IP_EVENT` handlers; create `EventGroupHandle_t`; store config pointer; return `ESP_OK` or `ESP_ERR_*`
+- [X] T034 [US3] Implement `wifi_manager_start()` spawning `wifi_task` (priority 4, 4 KB stack) in `components/wifi_manager/wifi_manager.c` — task drives connection; on connect sets `WIFI_CONNECTED_BIT`, clears `WIFI_DISCONNECTED_BIT`, updates `app_state.wifi_state = WIFI_STATE_CONNECTED`; on disconnect sets `WIFI_DISCONNECTED_BIT`, clears `WIFI_CONNECTED_BIT`, updates `app_state.wifi_state = WIFI_STATE_OFFLINE`; retries with exponential back-off (start 1 s, double each attempt, cap at `config->wifi_max_retry_interval_s`)
+- [X] T035 [P] [US3] Implement `wifi_manager_get_state()` and `wifi_manager_get_event_group()` as thread-safe accessors in `components/wifi_manager/wifi_manager.c`
+- [X] T036 [P] [US3] Create `components/wifi_manager/CMakeLists.txt` declaring `REQUIRES esp_wifi esp_event app_config app_state`
+- [X] T037 [US3] Update `main/main.c` `app_main()` to call `wifi_manager_init()` and `wifi_manager_start()` before `time_sync_start()`; pass `wifi_manager_get_event_group()` to `time_sync_init()` so `ntp_task` waits on the correct event group
 
 **Checkpoint**: Boot with router off — offline/retrying status shown, no crash, no reboot loop. Re-enable router — device reconnects, NTP re-syncs, no intervention needed. US3 independently testable.
 
