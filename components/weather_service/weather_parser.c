@@ -4,10 +4,12 @@
 
 #ifdef HOST_BUILD
 #include "../../tests/host/host_stubs.h"
+#include <stdio.h>
 #include <time.h>
 #else
 #include "esp_err.h"
 #include "esp_log.h"
+#include <stdio.h>
 #include <time.h>
 #endif
 
@@ -104,6 +106,11 @@ esp_err_t weather_parse(const char *json, size_t len, weather_data_t *out)
     }
 
     int total_slots = cJSON_GetArraySize(hourly_arr);
+    if (total_slots == 0) {
+        ESP_LOGE(TAG, "JSON parse error: 'hourly' array is empty (zero-slot forecast invalid)");
+        cJSON_Delete(root);
+        return ESP_ERR_INVALID_RESPONSE;
+    }
     int parse_slots = total_slots < WEATHER_FORECAST_SLOTS ? total_slots : WEATHER_FORECAST_SLOTS;
     tmp.forecast_count = 0;
 
