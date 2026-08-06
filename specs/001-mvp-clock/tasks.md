@@ -144,9 +144,9 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 
 ### Implementation for User Story 5
 
-- [ ] T045 [US5] Implement `build_status_string()` (file-local helper) in `main/main.c` — derive `status` string from `app_state.wifi_state` + `app_state.time_state` + `app_state.weather.freshness` following the priority table in data-model.md: `"Wi-Fi: connecting"` → `"Time: syncing"` → `"Synced"` → `"Weather stale"` → `"Weather N/A"` → `"Wi-Fi: offline"` → `"Offline, no sync"` (Wi-Fi state evaluated first, weather state only when Wi-Fi is connected and time is synced)
-- [ ] T046 [US5] Update `clock_task` in `main/main.c` to call `build_status_string()` every second iteration and assign the result to `payload.status`; set `payload.weather_stale = (app_state.weather.freshness == WEATHER_STALE)` before every `display_render()` call
-- [ ] T047 [US5] Update `app_main()` in `main/main.c` to call `display_show_message()` at each init milestone: `"Loading config..."` before `app_config_load()`, `"Connecting Wi-Fi..."` before `wifi_manager_start()`, `"Syncing time..."` before `time_sync_start()`; confirm splash + first message appears within 2 seconds of power-on (Principle XI)
+- [X] T045 [US5] Implement `build_status_string()` (file-local helper) in `main/main.c` — derive `status` string from `app_state.wifi_state` + `app_state.time_state` + `app_state.weather.freshness` following the priority table in data-model.md: `"Wi-Fi: connecting"` → `"Time: syncing"` → `"Synced"` → `"Weather stale"` → `"Weather N/A"` → `"Wi-Fi: offline"` → `"Offline, no sync"` (Wi-Fi state evaluated first, weather state only when Wi-Fi is connected and time is synced)
+- [X] T046 [US5] Update `clock_task` in `main/main.c` to call `build_status_string()` every second iteration and assign the result to `payload.status`; set `payload.weather_stale = (app_state.weather.freshness == WEATHER_STALE)` before every `display_render()` call
+- [X] T047 [US5] Update `app_main()` in `main/main.c` to call `display_show_message()` at each init milestone: `"Loading config..."` before `app_config_load()`, `"Connecting Wi-Fi..."` before `wifi_manager_start()`, `"Syncing time..."` before `time_sync_start()`; confirm splash + first message appears within 2 seconds of power-on (Principle XI)
 
 **Checkpoint**: All 7 status states produce distinct, correct footer strings per the quickstart.md Scenario 6 table. Splash visible within 2 seconds. US5 independently testable by state cycling.
 

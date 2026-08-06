@@ -1,4 +1,4 @@
-/* Init order: app_config → app_state → display → wifi_manager → time_sync
+/* Init order: app_state → display → app_config → wifi_manager → time_sync
  *             → weather_service → clock_task
  */
 #include <string.h>
@@ -16,6 +16,34 @@
 
 static const char *TAG = "main";
 
+/* Derives status footer from wifi/time/weather state per data-model.md priority table */
+static void build_status_string(const app_state_t *state, char *buf, size_t len)
+{
+    switch (state->wifi_state) {
+        case WIFI_STATE_INIT:
+        case WIFI_STATE_CONNECTING:
+            strncpy(buf, "Wi-Fi: connecting", len - 1);
+            break;
+        case WIFI_STATE_OFFLINE:
+            strncpy(buf, (state->time_state == TIME_STATE_SYNCED)
+                         ? "Wi-Fi: offline" : "Offline, no sync", len - 1);
+            break;
+        case WIFI_STATE_CONNECTED:
+        default:
+            if (state->time_state != TIME_STATE_SYNCED) {
+                strncpy(buf, "Time: syncing", len - 1);
+            } else if (state->weather.freshness == WEATHER_STALE) {
+                strncpy(buf, "Weather stale", len - 1);
+            } else if (state->weather.freshness == WEATHER_UNAVAILABLE) {
+                strncpy(buf, "Weather N/A", len - 1);
+            } else {
+                strncpy(buf, "Synced", len - 1);
+            }
+            break;
+    }
+    buf[len - 1] = '\0';
+}
+
 /* clock_task — priority 5, 4 KB stack; drives display every second */
 static void clock_task(void *pvArg)
 {
@@ -23,9 +51,9 @@ static void clock_task(void *pvArg)
     app_state_t       snap;
     display_payload_t payload;
 
+    memset(&snap,    0, sizeof(snap));
     memset(&payload, 0, sizeof(payload));
     strncpy(payload.weather_summary, "Weather N/A", sizeof(payload.weather_summary) - 1);
-    strncpy(payload.status, "Time: syncing", sizeof(payload.status) - 1);
 
     while (1) {
         /* Keep app_state.local_time current from system clock */
@@ -43,7 +71,6 @@ static void clock_task(void *pvArg)
             time_format_date(&snap.local_time, payload.date_str,  sizeof(payload.date_str));
 
             /* Weather summary */
-            payload.weather_stale = (snap.weather.freshness == WEATHER_STALE);
             if (snap.weather.freshness == WEATHER_UNAVAILABLE) {
                 strncpy(payload.weather_summary, "Weather N/A",
                         sizeof(payload.weather_summary) - 1);
@@ -69,13 +96,11 @@ static void clock_task(void *pvArg)
                 payload.forecast[i][0] = '\0';
             }
 
-            /* Status string */
-            if (snap.time_state == TIME_STATE_SYNCED) {
-                strncpy(payload.status, "Synced", sizeof(payload.status) - 1);
-            } else {
-                strncpy(payload.status, "Time: syncing", sizeof(payload.status) - 1);
-            }
         }
+
+        /* Always reflect latest snapshot — executes even when mutex times out */
+        payload.weather_stale = (snap.weather.freshness == WEATHER_STALE);
+        build_status_string(&snap, payload.status, sizeof(payload.status));
 
         display_render(&payload);
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -84,33 +109,36 @@ static void clock_task(void *pvArg)
 
 void app_main(void)
 {
-    device_config_t config;
-    esp_err_t ret = app_config_load(&config);
-    if (ret != ESP_OK) {
-        error_handler_fatal(TAG, "app_config_load failed", ret);
-    }
-
-    ret = app_state_init();
+    esp_err_t ret = app_state_init();
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "app_state_init failed", ret);
     }
 
-    /* display_init shows splash screen "Kronos v0.1.0" within 2 s (SC-001) */
+    /* display_init shows splash screen "Kronos v0.1.0" within 2 s (SC-001, Principle XI) */
     ret = display_init();
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "display_init failed", ret);
+    }
+
+    display_show_message("Loading config...", NULL);
+    device_config_t config;
+    ret = app_config_load(&config);
+    if (ret != ESP_OK) {
+        error_handler_fatal(TAG, "app_config_load failed", ret);
     }
 
     ret = wifi_manager_init(&config);
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "wifi_manager_init failed", ret);
     }
+    display_show_message("Connecting Wi-Fi...", NULL);
     wifi_manager_start(); /* spawns wifi_task (priority 4) */
 
     ret = time_sync_init(&config);
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "time_sync_init failed", ret);
     }
+    display_show_message("Syncing time...", NULL);
     time_sync_start(); /* spawns ntp_task (priority 3) */
 
     /* Pass shared state pointer to weather_service (pointer is stable after app_state_init) */
