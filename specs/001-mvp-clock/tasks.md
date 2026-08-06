@@ -160,10 +160,10 @@ description: "Implementation tasks for Kronos MVP — Embedded IoT Digital Clock
 
 ### Implementation for User Story 6
 
-- [ ] T048 [P] [US6] Audit `components/display/display.c` — verify zero direct calls to `esp_sntp`, `esp_http_client`, NTP or `weather_*` functions; fix any violations so display module accepts only `DisplayPayload` input (Principle V)
-- [ ] T049 [P] [US6] Audit all component `CMakeLists.txt` files — verify each component lists only its direct dependencies in `REQUIRES`; confirm no circular dependencies exist in the component graph (Principle VI)
-- [ ] T050 [P] [US6] Audit all component `.h` headers — verify each exposes only types defined in its own header or explicitly `#include`d headers; no internal structs or file-scope variables in public headers
-- [ ] T051 [US6] Add a wiring-order comment block at the top of `app_main()` in `main/main.c` documenting the init sequence and which module each `_init()` / `_start()` call belongs to; confirm `main.c` is the sole location where all seven module `_init()` and `_start()` functions are called
+- [X] T048 [P] [US6] Audit `components/display/display.c` — verify zero direct calls to `esp_sntp`, `esp_http_client`, NTP or `weather_*` functions; fix any violations so display module accepts only `DisplayPayload` input (Principle V)
+- [X] T049 [P] [US6] Audit all component `CMakeLists.txt` files — verify each component lists only its direct dependencies in `REQUIRES`; confirm no circular dependencies exist in the component graph (Principle VI)
+- [X] T050 [P] [US6] Audit all component `.h` headers — verify each exposes only types defined in its own header or explicitly `#include`d headers; no internal structs or file-scope variables in public headers
+- [X] T051 [US6] Add a wiring-order comment block at the top of `app_main()` in `main/main.c` documenting the init sequence and which module each `_init()` / `_start()` call belongs to; confirm `main.c` is the sole location where all seven module `_init()` and `_start()` functions are called
 
 **Checkpoint**: Code review passes all six criteria. No constitution violations for Principle V or VI. US6 independently verifiable by code review.
 

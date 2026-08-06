@@ -1,6 +1,3 @@
-/* Init order: app_state → display → app_config → wifi_manager → time_sync
- *             → weather_service → clock_task
- */
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -109,6 +106,15 @@ static void clock_task(void *pvArg)
 
 void app_main(void)
 {
+    /* ── Module wiring order (Principle VI — main.c is sole wiring point) ──────
+     * 1. app_state_init()          [app_state]    — mutex + shared state struct
+     * 2. display_init()            [display]      — I2C + OLED + splash screen
+     * 3. app_config_load()         [app_config]   — NVS → device_config_t
+     * 4. wifi_manager_init/start() [wifi_manager] — station mode + event group
+     * 5. time_sync_init/start()    [time_sync]    — SNTP + ntp_task (waits WIFI_CONNECTED_BIT)
+     * 6. weather_service_init/start() [weather_service] — HTTPS fetch + weather_task
+     * 7. xTaskCreate(clock_task)   [main]         — drives display_render() every second
+     * ─────────────────────────────────────────────────────────────────────── */
     esp_err_t ret = app_state_init();
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "app_state_init failed", ret);
