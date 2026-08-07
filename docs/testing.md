@@ -13,15 +13,73 @@ All host tests MUST pass before flashing any firmware.
 
 ### Host Tests
 
-- `cmake` ≥ 3.16 on PATH
-- A C compiler on PATH (`gcc` or `clang` on Linux/macOS; `cl.exe` or `gcc` via MinGW/MSYS2
-  on Windows)
+#### CMake ≥ 3.16
+
+**Check:**
+```bash
+cmake --version
+```
+Expected output: `cmake version 3.16.x` or higher.
+
+**Install if missing:**
+
+| Platform | Command |
+|---|---|
+| Windows (winget) | `winget install Kitware.CMake` |
+| Windows (choco) | `choco install cmake` |
+| macOS (Homebrew) | `brew install cmake` |
+| Ubuntu / Debian | `sudo apt install cmake` |
+| Fedora / RHEL | `sudo dnf install cmake` |
+
+After installing on Windows, restart your terminal so `cmake` is on `PATH`.
+
+#### C Compiler
+
+**Check:**
+```bash
+# gcc (Linux / macOS / MinGW)
+gcc --version
+
+# clang (macOS / Linux)
+clang --version
+
+# MSVC (Windows — run from a Developer Command Prompt)
+cl
+```
+
+**Install if missing:**
+
+| Platform | Steps |
+|---|---|
+| Windows (MSVC) | Install [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe); select **"Desktop development with C++"** workload |
+| Windows (MinGW via winget) | `winget install GnuWin32.Gcc` then add the `bin` folder to `PATH` |
+| Windows (MinGW via MSYS2) | Install [MSYS2](https://www.msys2.org/), then run `pacman -S mingw-w64-ucrt-x86_64-gcc` |
+| macOS | `xcode-select --install` (installs `clang`), or `brew install gcc` |
+| Ubuntu / Debian | `sudo apt install build-essential` |
+| Fedora / RHEL | `sudo dnf groupinstall "Development Tools"` |
 
 ### On-Device Tests
 
-- ESP-IDF v5.x installed (`idf.py` on PATH)
+#### ESP-IDF v5.x
+
+**Check:**
+```bash
+idf.py --version
+```
+Expected output: `ESP-IDF v5.x.x`.
+
+**Install if missing:**  
+Follow the official [ESP-IDF Get Started guide](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/) for your platform. The recommended method is the [VS Code ESP-IDF extension](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension), which handles the full toolchain setup through a guided wizard.
+
+#### Hardware
+
 - ESP32-WROOM-32 connected via USB
-- Serial port identified (e.g., `/dev/ttyUSB0` on Linux, `COM3` on Windows)
+- Serial port identified:
+  - **Linux:** `ls /dev/ttyUSB*` — typically `/dev/ttyUSB0`
+  - **macOS:** `ls /dev/cu.usbserial*` — typically `/dev/cu.usbserial-0001`
+  - **Windows:** Open **Device Manager → Ports (COM & LPT)** — typically `COM3` or `COM4`
+
+  If the port is not detected, install the [CP210x USB-to-UART driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers) (most ESP32 dev boards use this chip).
 
 ---
 
