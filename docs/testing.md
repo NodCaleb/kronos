@@ -62,11 +62,13 @@ cl
 
 #### ESP-IDF v5.x
 
-**Check:**
+**Check** (in the **ESP-IDF Terminal** — see note below):
 ```bash
 idf.py --version
 ```
 Expected output: `ESP-IDF v5.x.x`.
+
+> **Windows:** `idf.py` requires an activated ESP-IDF environment. Always run it from the **ESP-IDF Terminal**, opened via the VS Code Command Palette: **`ESP-IDF: Open ESP-IDF Terminal`**. Running it in a plain PowerShell or CMD window will cause the command to flash and disappear with no output.
 
 **Install if missing:**  
 Follow the official [ESP-IDF Get Started guide](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/) for your platform. The recommended method is the [VS Code ESP-IDF extension](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension), which handles the full toolchain setup through a guided wizard.
@@ -170,6 +172,8 @@ Integration tests run directly on the ESP32 and verify platform-dependent init p
 
 ### Running Tests
 
+> **Windows:** Run the commands below from the **ESP-IDF Terminal** (`ESP-IDF: Open ESP-IDF Terminal` in the Command Palette). Replace `/dev/ttyUSB0` with your COM port (e.g., `COM10`).
+
 ```bash
 # Run each test project individually (ESP-IDF component test runner)
 idf.py -T tests/integration/test_wifi_manager   -p /dev/ttyUSB0
@@ -180,7 +184,7 @@ idf.py -T tests/integration/test_app_state       -p /dev/ttyUSB0
 idf.py -T tests/integration/test_error_handler   -p /dev/ttyUSB0
 ```
 
-Replace `/dev/ttyUSB0` with the correct serial port for your system.
+Replace `/dev/ttyUSB0` with the correct serial port for your system (see [Hardware](#hardware) in Prerequisites).
 
 ### Expected Serial Output
 
