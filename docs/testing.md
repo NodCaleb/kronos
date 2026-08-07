@@ -174,17 +174,28 @@ Integration tests run directly on the ESP32 and verify platform-dependent init p
 
 > **Windows:** Run the commands below from the **ESP-IDF Terminal** (`ESP-IDF: Open ESP-IDF Terminal` in the Command Palette). Replace `/dev/ttyUSB0` with your COM port (e.g., `COM10`).
 
+Each test is a standalone ESP-IDF project — navigate into it, then build, flash, and monitor:
+
 ```bash
-# Run each test project individually (ESP-IDF component test runner)
-idf.py -T tests/integration/test_wifi_manager   -p /dev/ttyUSB0
-idf.py -T tests/integration/test_time_sync      -p /dev/ttyUSB0
-idf.py -T tests/integration/test_weather_service -p /dev/ttyUSB0
-idf.py -T tests/integration/test_display         -p /dev/ttyUSB0
-idf.py -T tests/integration/test_app_state       -p /dev/ttyUSB0
-idf.py -T tests/integration/test_error_handler   -p /dev/ttyUSB0
+# Replace /dev/ttyUSB0 with your port (e.g., COM10 on Windows)
+cd tests/integration/test_wifi_manager
+idf.py build flash monitor -p /dev/ttyUSB0
 ```
 
-Replace `/dev/ttyUSB0` with the correct serial port for your system (see [Hardware](#hardware) in Prerequisites).
+Repeat for each test project:
+
+```
+tests/integration/test_wifi_manager
+tests/integration/test_time_sync
+tests/integration/test_weather_service
+tests/integration/test_display
+tests/integration/test_app_state
+tests/integration/test_error_handler
+```
+
+Press **Ctrl+]** to exit the serial monitor after reading the result.
+
+See [Hardware](#hardware) in Prerequisites for how to identify your serial port.
 
 ### Expected Serial Output
 
