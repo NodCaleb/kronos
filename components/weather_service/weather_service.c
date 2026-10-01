@@ -6,6 +6,7 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_http_client.h"
+#include "esp_crt_bundle.h"
 #include "wifi_manager.h"
 #include "app_state.h"
 #include "app_config.h"

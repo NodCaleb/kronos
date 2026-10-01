@@ -47,21 +47,28 @@ static void clock_task(void *pvArg)
                         sizeof(payload.weather_summary) - 1);
                 payload.weather_summary[sizeof(payload.weather_summary) - 1] = '\0';
             } else {
+                /* condition_text may exceed the display width; truncation is intentional */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
                 snprintf(payload.weather_summary, sizeof(payload.weather_summary),
                          "%.0f\xC2\xB0  %s",
                          (double)snap.weather.current_temp,
                          snap.weather.current_condition_text);
+#pragma GCC diagnostic pop
             }
 
             /* Forecast lines (up to DISPLAY_FORECAST_LINES slots) */
             int slots = snap.weather.forecast_count < DISPLAY_FORECAST_LINES
                         ? snap.weather.forecast_count : DISPLAY_FORECAST_LINES;
             for (int i = 0; i < slots; i++) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
                 snprintf(payload.forecast[i], sizeof(payload.forecast[i]),
                          "%s  %.0f\xC2\xB0  %s",
                          snap.weather.forecast[i].time_label,
                          (double)snap.weather.forecast[i].temperature,
                          snap.weather.forecast[i].condition_text);
+#pragma GCC diagnostic pop
             }
             for (int i = slots; i < DISPLAY_FORECAST_LINES; i++) {
                 payload.forecast[i][0] = '\0';
