@@ -70,6 +70,18 @@ All tests MUST pass before any firmware is flashed.
 
 ## Scenario 2 — Build and Flash Firmware
 
+> **Windows (PowerShell) note**: `idf.py` requires the ESP-IDF environment to be
+> activated in **every new terminal session** before use — activation does not
+> persist across terminals. At the start of each new session, run:
+> ```powershell
+> . C:\Users\nodca\esp\v5.5\esp-idf\export.ps1
+> $env:IDF_COMPONENT_CACHE_PATH = 'C:\Users\nodca\.espressif\component_cache'
+> ```
+> The second line works around an environment-specific issue where newly created
+> folders directly under `AppData\Local` are deleted before the Component Manager's
+> git clone can complete, causing `idf.py` to fail with
+> `fatal: unable to get current working directory`.
+
 ```bash
 idf.py set-target esp32
 idf.py menuconfig        # verify I2C pins, log level

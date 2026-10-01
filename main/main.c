@@ -3,6 +3,7 @@
 #include <time.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_log.h"
 #include "app_config.h"
 #include "app_state.h"
 #include "display.h"
@@ -88,6 +89,8 @@ void app_main(void)
      * 6. weather_service_init/start() [weather_service] — HTTPS fetch + weather_task
      * 7. xTaskCreate(clock_task)   [main]         — drives display_render() every second
      * ─────────────────────────────────────────────────────────────────────── */
+    ESP_LOGI("KRONOS", "Booting Kronos v0.1.0");
+
     esp_err_t ret = app_state_init();
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "app_state_init failed", ret);
