@@ -43,7 +43,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
 
         /* Notify wifi_task to schedule a reconnection attempt */
         if (s_wifi_task_handle) {
-            vTaskNotifyGiveFromISR(s_wifi_task_handle, NULL);
+            xTaskNotifyGive(s_wifi_task_handle);
         }
 
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
@@ -153,7 +153,7 @@ esp_err_t wifi_manager_init(const device_config_t *config)
 
 void wifi_manager_start(void)
 {
-    xTaskCreate(wifi_task, "wifi_task", 4096, NULL, 4, &s_wifi_task_handle);
+    xTaskCreatePinnedToCore(wifi_task, "wifi_task", 4096, NULL, 4, &s_wifi_task_handle, 0);
 }
 
 wifi_state_t wifi_manager_get_state(void)

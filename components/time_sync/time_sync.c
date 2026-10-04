@@ -35,7 +35,10 @@ static void ntp_task(void *pvArg)
         ESP_LOGI(TAG, "Wi-Fi connected — initiating SNTP sync");
 
         TickType_t ticks_start = xTaskGetTickCount();
-        time_t     t_before    = time(NULL);
+        /* app_state_lock also serializes libc time() across tasks (avoids concurrent-first-call kernel lock corruption) */
+        app_state_lock();
+        time_t t_before = time(NULL);
+        app_state_unlock();
 
         esp_sntp_init();
 
@@ -53,7 +56,9 @@ static void ntp_task(void *pvArg)
 
         if (synced) {
             TickType_t ticks_now = xTaskGetTickCount();
-            time_t     t_after   = time(NULL);
+            app_state_lock();
+            time_t t_after = time(NULL);
+            app_state_unlock();
             float elapsed_s = (float)(ticks_now - ticks_start) *
                               (float)portTICK_PERIOD_MS / 1000.0f;
             float drift_s   = (float)(t_after - t_before) - elapsed_s;
@@ -95,10 +100,10 @@ esp_err_t time_sync_init(const device_config_t *config)
     return ESP_OK;
 }
 
-/* T029 — spawn ntp_task (priority 3, 3 KB stack) */
+/* T029 — spawn ntp_task (priority 3, 8 KB stack); pinned to core 0 to rule out SMP cross-core races */
 void time_sync_start(void)
 {
-    xTaskCreate(ntp_task, "ntp_task", 3 * 1024, NULL, 3, NULL);
+    xTaskCreatePinnedToCore(ntp_task, "ntp_task", 8 * 1024, NULL, 3, NULL, 0);
 }
 
 /* T030 — thread-safe state accessor */

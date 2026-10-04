@@ -104,9 +104,10 @@ static void weather_task(void *pvArg)
 
         /* ── Staleness check ─────────────────────────────────────────── */
         {
+            /* app_state_lock also serializes libc time() across tasks (avoids concurrent-first-call kernel lock corruption) */
+            app_state_lock();
             int64_t now_s = (int64_t)time(NULL);
             int64_t stale_threshold_s = (int64_t)(2 * s_config->weather_refresh_interval_s);
-            app_state_lock();
             app_state_t *st = app_state_get();
             if (st->weather.freshness != WEATHER_UNAVAILABLE &&
                 st->weather.fetch_timestamp_s > 0 &&
@@ -248,5 +249,6 @@ esp_err_t weather_service_init(const device_config_t *config, app_state_t *state
 
 void weather_service_start(void)
 {
-    xTaskCreate(weather_task, "weather_task", 6144, NULL, 3, NULL);
+    /* Pinned to core 0 to rule out SMP cross-core races */
+    xTaskCreatePinnedToCore(weather_task, "weather_task", 8192, NULL, 3, NULL, 0);
 }

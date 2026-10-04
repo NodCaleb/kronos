@@ -1,5 +1,6 @@
 #include "app_config.h"
 #include <string.h>
+#include <stdbool.h>
 
 /* ── Platform portability ────────────────────────────────────────────────── */
 #ifdef ESP_PLATFORM
@@ -66,6 +67,24 @@ esp_err_t app_config_validate(const device_config_t *config)
 /* ── NVS load (ESP32-only) ───────────────────────────────────────────────── */
 #ifdef ESP_PLATFORM
 
+/* FNV-1a over secrets.h values; a changed hash means secrets.h was edited since the last flash */
+static uint32_t compute_secrets_hash(void)
+{
+    const char *fields[] = {
+        CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD, CONFIG_OWM_API_KEY,
+        CONFIG_WEATHER_LOCATION, CONFIG_TZ_POSIX,
+    };
+    uint32_t hash = 2166136261u;
+    for (size_t i = 0; i < sizeof(fields) / sizeof(fields[0]); i++) {
+        for (const char *p = fields[i]; *p != '\0'; p++) {
+            hash ^= (uint8_t)*p;
+            hash *= 16777619u;
+        }
+        hash ^= 0xFFu; /* separator so field boundaries affect the hash */
+    }
+    return hash;
+}
+
 esp_err_t app_config_load(device_config_t *out_config)
 {
     if (!out_config) {
@@ -89,10 +108,14 @@ esp_err_t app_config_load(device_config_t *out_config)
         return ret;
     }
 
-    uint8_t init_done = 0;
-    if (nvs_get_u8(h, "init_done", &init_done) == ESP_ERR_NVS_NOT_FOUND) {
-        /* First boot: write defaults from secrets.h */
-        ESP_LOGI(TAG, "First boot — writing config to NVS");
+    uint32_t current_hash = compute_secrets_hash();
+    uint32_t stored_hash   = 0;
+    bool secrets_changed = (nvs_get_u32(h, "cfg_hash", &stored_hash) != ESP_OK) ||
+                           (stored_hash != current_hash);
+
+    if (secrets_changed) {
+        /* First boot, or secrets.h was edited since the last flash: (re)write defaults */
+        ESP_LOGI(TAG, "secrets.h changed (or first boot) — writing config to NVS");
         nvs_set_str(h, "wifi_ssid",   CONFIG_WIFI_SSID);
         nvs_set_str(h, "wifi_pass",   CONFIG_WIFI_PASSWORD);
         nvs_set_str(h, "ntp_srv",     "pool.ntp.org");
@@ -106,7 +129,7 @@ esp_err_t app_config_load(device_config_t *out_config)
         nvs_set_u32(h, "retry_cap_s", 300);
         nvs_set_u8(h,  "units",       (uint8_t)UNITS_METRIC);
         nvs_set_u8(h,  "log_level",   3); /* ESP_LOG_INFO */
-        nvs_set_u8(h,  "init_done",   1);
+        nvs_set_u32(h, "cfg_hash",    current_hash);
         ret = nvs_commit(h);
         if (ret != ESP_OK) {
             nvs_close(h);
@@ -163,6 +186,12 @@ esp_err_t app_config_load(device_config_t *out_config)
     if (ret != ESP_OK) { nvs_close(h); return ret; }
 
     nvs_close(h);
+
+    ret = app_config_validate(out_config);
+    if (ret != ESP_OK) {
+        return ret;
+    }
+
     ESP_LOGI(TAG, "Config loaded from NVS (ssid=\"%s\")", out_config->wifi_ssid);
     return ESP_OK;
 }

@@ -28,11 +28,11 @@ static void clock_task(void *pvArg)
 
     while (1) {
         /* Keep app_state.local_time current from system clock */
+        /* app_state_lock also serializes libc time() across tasks (avoids concurrent-first-call kernel lock corruption) */
+        app_state_lock();
         time_t     now = time(NULL);
         struct tm  tm_local;
         localtime_r(&now, &tm_local);
-
-        app_state_lock();
         app_state_get()->local_time = tm_local;
         app_state_unlock();
 
@@ -110,7 +110,8 @@ void app_main(void)
     }
 
     display_show_message("Loading config...", NULL);
-    device_config_t config;
+    /* static: wifi_task/ntp_task/weather_task keep this pointer after app_main's task is deleted */
+    static device_config_t config;
     ret = app_config_load(&config);
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "app_config_load failed", ret);
@@ -138,7 +139,8 @@ void app_main(void)
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "weather_service_init failed", ret);
     }
-    weather_service_start(); /* spawns weather_task (priority 3) */
+    /* TEMP DIAGNOSTIC: weather_service_start() disabled to isolate whether weather_task triggers the Got-IP crash */
+    // weather_service_start(); /* spawns weather_task (priority 3) */
 
-    xTaskCreate(clock_task, "clock_task", 4096, NULL, 5, NULL);
+    xTaskCreatePinnedToCore(clock_task, "clock_task", 4096, NULL, 5, NULL, 0);
 }
