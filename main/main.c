@@ -139,8 +139,7 @@ void app_main(void)
     if (ret != ESP_OK) {
         error_handler_fatal(TAG, "weather_service_init failed", ret);
     }
-    /* TEMP DIAGNOSTIC: weather_service_start() disabled to isolate whether weather_task triggers the Got-IP crash */
-    // weather_service_start(); /* spawns weather_task (priority 3) */
+    weather_service_start(); /* spawns weather_task (priority 3) */
 
     xTaskCreatePinnedToCore(clock_task, "clock_task", 4096, NULL, 5, NULL, 0);
 }

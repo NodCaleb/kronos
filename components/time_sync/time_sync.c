@@ -59,11 +59,17 @@ static void ntp_task(void *pvArg)
             app_state_lock();
             time_t t_after = time(NULL);
             app_state_unlock();
-            float elapsed_s = (float)(ticks_now - ticks_start) *
-                              (float)portTICK_PERIOD_MS / 1000.0f;
-            float drift_s   = (float)(t_after - t_before) - elapsed_s;
 
-            ESP_LOGI(TAG, "Time synchronized. Drift: %.2f s", drift_s);
+            /* On the first-ever sync t_before is still ~epoch, so a before/after delta
+             * isn't a meaningful drift figure — only compute it on subsequent re-syncs. */
+            if (s_sync_state == TIME_STATE_SYNCED) {
+                float elapsed_s = (float)(ticks_now - ticks_start) *
+                                  (float)portTICK_PERIOD_MS / 1000.0f;
+                float drift_s   = (float)(t_after - t_before) - elapsed_s;
+                ESP_LOGI(TAG, "Time synchronized. Drift: %.2f s", drift_s);
+            } else {
+                ESP_LOGI(TAG, "Time synchronized.");
+            }
 
             app_state_lock();
             app_state_get()->time_state = TIME_STATE_SYNCED;

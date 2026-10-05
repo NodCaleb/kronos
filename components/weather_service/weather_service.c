@@ -22,7 +22,7 @@ static const char *TAG = "weather_service";
 static const device_config_t *s_config = NULL;
 static app_state_t            *s_state  = NULL;
 
-/* ── Response accumulation buffer (task-local, allocated on task stack) ─ */
+/* ── Response accumulation buffer (must be static — too large for the task stack) ─ */
 
 typedef struct {
     char  buf[WEATHER_RESP_BUF_SIZE];
@@ -94,6 +94,8 @@ static void weather_task(void *pvArg)
     EventGroupHandle_t event_group = wifi_manager_get_event_group();
     char url[URL_BUF_SIZE];
     build_url(s_config, url, sizeof(url));
+    /* Debug only — includes the API key in cleartext; remove/guard before shipping */
+    ESP_LOGI(TAG, "Request URL: %s", url);
 
     uint32_t retry_interval_s = s_config->weather_refresh_interval_s;
 
@@ -120,7 +122,8 @@ static void weather_task(void *pvArg)
         ESP_LOGI(TAG, "Fetching weather from OWM...");
 
         /* ── HTTP request ────────────────────────────────────────────── */
-        resp_buf_t rb;
+        /* static: 8 KB response buffer must not live on weather_task's stack */
+        static resp_buf_t rb;
         memset(&rb, 0, sizeof(rb));
 
         esp_http_client_config_t http_cfg = {
