@@ -16,7 +16,7 @@ static const char *TAG = "weather_service";
 
 /* ── Module state ─────────────────────────────────────────────────────── */
 
-#define WEATHER_RESP_BUF_SIZE   8192
+#define WEATHER_RESP_BUF_SIZE   20480
 #define URL_BUF_SIZE            256
 
 static const device_config_t *s_config = NULL;
@@ -94,8 +94,9 @@ static void weather_task(void *pvArg)
     EventGroupHandle_t event_group = wifi_manager_get_event_group();
     char url[URL_BUF_SIZE];
     build_url(s_config, url, sizeof(url));
+    
     /* Debug only — includes the API key in cleartext; remove/guard before shipping */
-    ESP_LOGI(TAG, "Request URL: %s", url);
+    // ESP_LOGI(TAG, "Request URL: %s", url);
 
     uint32_t retry_interval_s = s_config->weather_refresh_interval_s;
 
